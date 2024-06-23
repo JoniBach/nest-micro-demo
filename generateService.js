@@ -107,7 +107,7 @@ function generateService(service, db, dbHost, dbPort, dbUsername, dbPassword, db
   if (db === 'mongodb') {
     // MongoDB-specific schema
     const schemaContent = `
-import { Schema, Document } from 'mongoose';
+import { Schema, Document, model } from 'mongoose';
 
 export const ${ServiceName}Schema = new Schema({
   created: { type: Date, default: Date.now },
@@ -120,6 +120,8 @@ export interface ${ServiceName} extends Document {
   updated: Date;
   ${serviceName}_example: string;
 }
+
+export const ${ServiceName}Model = model<${ServiceName}>('${ServiceName}', ${ServiceName}Schema);
     `;
 
     const dtoContent = `
@@ -133,7 +135,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Create${ServiceName}Dto } from './dto/create-${serviceName}.dto';
-import { ${ServiceName} } from './schemas/${serviceName}.schema';
+import { ${ServiceName} } from './entities/${serviceName}.schema';
 
 @Injectable()
 export class ${ServiceName}Service {
@@ -153,7 +155,7 @@ export class ${ServiceName}Service {
   }
 
   async remove(id: string): Promise<void> {
-    await this.${serviceName}Model.findByIdAndRemove(id).exec();
+    await this.${serviceName}Model.findByIdAndDelete(id).exec();
   }
 }
     `;
@@ -162,6 +164,7 @@ export class ${ServiceName}Service {
 import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { ${ServiceName}Service } from './${serviceName}.service';
 import { Create${ServiceName}Dto } from './dto/create-${serviceName}.dto';
+import { ${ServiceName} } from './entities/${serviceName}.schema';
 
 @Controller('${serviceName}')
 export class ${ServiceName}Controller {
@@ -194,7 +197,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ${ServiceName}Service } from './${serviceName}.service';
 import { ${ServiceName}Controller } from './${serviceName}.controller';
-import { ${ServiceName}Schema } from './schemas/${serviceName}.schema';
+import { ${ServiceName}Schema } from './entities/${serviceName}.schema';
 
 @Module({
   imports: [MongooseModule.forRoot('${dbUri}/${dbName}'), MongooseModule.forFeature([{ name: '${ServiceName}', schema: ${ServiceName}Schema }])],
@@ -204,7 +207,7 @@ import { ${ServiceName}Schema } from './schemas/${serviceName}.schema';
 export class ${ServiceName}Module {}
     `;
 
-    fs.writeFileSync(path.join(basePath, 'schemas', `${serviceName}.schema.ts`), schemaContent);
+    fs.writeFileSync(path.join(entityDir, `${serviceName}.schema.ts`), schemaContent);
     fs.writeFileSync(path.join(dtoDir, `create-${serviceName}.dto.ts`), dtoContent);
     fs.writeFileSync(path.join(basePath, `${serviceName}.service.ts`), serviceContent);
     fs.writeFileSync(path.join(basePath, `${serviceName}.controller.ts`), controllerContent);
@@ -311,7 +314,12 @@ import { ${ServiceName} } from './entities/${serviceName}.entity';
 @Module({
   imports: [TypeOrmModule.forRoot({
     type: '${db}',
-    database: '${dbName}.sqlite',
+    ${db === 'sqlite' ? `database: '${dbName}.sqlite',` : `
+    host: '${dbHost}',
+    port: ${dbPort},
+    username: '${dbUsername}',
+    password: '${dbPassword}',
+    database: '${dbName}',`}
     entities: [${ServiceName}],
     synchronize: true,
   }), TypeOrmModule.forFeature([${ServiceName}])],
