@@ -9,7 +9,7 @@ Handlebars.registerHelper('eq', function (a, b) {
 function generateFiles(service, db, dbDetails) {
   const serviceName = service.toLowerCase();
   const ServiceName = service.charAt(0).toUpperCase() + service.slice(1);
-  const basePath = path.join(__dirname, '..', '..', 'src', serviceName); // Corrected path
+  const basePath = path.join(__dirname, '..', '..', 'src', serviceName);
 
   const entityDir = path.join(basePath, 'entities');
   const dtoDir = path.join(basePath, 'dto');
@@ -31,6 +31,12 @@ function generateFiles(service, db, dbDetails) {
     { template: 'module.hbs', output: `${serviceName}.module.ts`, dir: basePath },
   ];
 
+  // Add Dockerfile and docker-compose.yml templates
+  const dockerTemplates = [
+    { template: 'Dockerfile.hbs', output: 'Dockerfile', dir: path.join(__dirname, '..', '..') },
+    { template: 'docker-compose.yml.hbs', output: 'docker-compose.yml', dir: path.join(__dirname, '..', '..') },
+  ];
+
   templates.forEach(({ template, output, dir }) => {
     const templatePath = path.join(__dirname, '..', 'templates', templateType, template);
     const outputPath = path.join(dir, output);
@@ -39,6 +45,16 @@ function generateFiles(service, db, dbDetails) {
     const fileContent = compiledTemplate(templateData);
     fs.writeFileSync(outputPath, fileContent, 'utf-8');
   });
+
+  // Generate Docker-related files
+  // dockerTemplates.forEach(({ template, output, dir }) => {
+  //   const templatePath = path.join(__dirname, '..', 'templates', 'docker', template);
+  //   const outputPath = path.join(dir, output);
+  //   const templateContent = fs.readFileSync(templatePath, 'utf-8');
+  //   const compiledTemplate = Handlebars.compile(templateContent);
+  //   const fileContent = compiledTemplate(templateData);
+  //   fs.writeFileSync(outputPath, fileContent, 'utf-8');
+  // });
 }
 
 function updateAppModule(service) {

@@ -11,7 +11,12 @@ function installDatabaseDriver(db) {
   const packageName = dbDrivers[db];
   if (packageName) {
     console.log(`Installing ${packageName}...`);
-    execSync(`npm install ${packageName} --save`, { stdio: 'inherit' });
+    try {
+      execSync(`npm install ${packageName} --save`, { stdio: 'inherit' });
+    } catch (error) {
+      console.log(`Initial installation failed. Retrying with --legacy-peer-deps...`);
+      execSync(`npm install ${packageName} --save --legacy-peer-deps`, { stdio: 'inherit' });
+    }
   }
 }
 
