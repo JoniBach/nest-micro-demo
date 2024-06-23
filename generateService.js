@@ -21,7 +21,8 @@ program
         name: 'db',
         message: 'Database type:',
         choices: [
-                    // 'mysql', 
+          // add these later when working
+          // 'mysql', 
           // 'postgres', 
           'sqlite', 
           'mongodb'
