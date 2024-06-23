@@ -20,7 +20,12 @@ program
         type: 'list',
         name: 'db',
         message: 'Database type:',
-        choices: ['mysql', 'postgres', 'sqlite', 'mongodb'],
+        choices: [
+                    // 'mysql', 
+          // 'postgres', 
+          'sqlite', 
+          'mongodb'
+        ],
         default: 'mysql',
       },
     ]);
@@ -38,7 +43,7 @@ program
           type: 'input',
           name: 'dbPort',
           message: 'Database port:',
-          default: answers.db === 'mysql' || answers.db === 'postgres' ? 3306 : 27017,
+          default: answers.db === 'mysql' ? 3306 : answers.db === 'postgres' ? 5432 : 27017,
         },
         {
           type: 'input',
@@ -79,6 +84,9 @@ program
     const { service, db } = answers;
     const { dbHost, dbPort, dbUsername, dbPassword, dbName, dbUri } = dbDetails;
 
+    // Install the necessary database driver package
+    installDatabaseDriver(db);
+
     // Generate basic structure using Nest CLI
     execSync(`nest generate module ${service}`, { stdio: 'inherit' });
     execSync(`nest generate controller ${service}`, { stdio: 'inherit' });
@@ -89,6 +97,28 @@ program
   });
 
 program.parse(process.argv);
+
+function installDatabaseDriver(db) {
+  let packageName;
+  switch (db) {
+    case 'mysql':
+      packageName = 'mysql2';
+      break;
+    case 'postgres':
+      packageName = 'pg';
+      break;
+    case 'sqlite':
+      packageName = 'sqlite3';
+      break;
+    case 'mongodb':
+      packageName = 'mongodb';
+      break;
+  }
+  if (packageName) {
+    console.log(`Installing ${packageName}...`);
+    execSync(`npm install ${packageName} --save`, { stdio: 'inherit' });
+  }
+}
 
 function generateService(service, db, dbHost, dbPort, dbUsername, dbPassword, dbName, dbUri) {
   const serviceName = service.toLowerCase();
